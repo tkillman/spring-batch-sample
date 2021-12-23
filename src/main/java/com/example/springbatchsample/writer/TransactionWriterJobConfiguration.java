@@ -1,6 +1,5 @@
-package com.example.springbatchsample.processor;
+package com.example.springbatchsample.writer;
 
-import com.example.springbatchsample.entity.ClassInformation;
 import com.example.springbatchsample.entity.Teacher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +8,6 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
@@ -22,9 +20,9 @@ import javax.persistence.EntityManagerFactory;
 @Slf4j
 @RequiredArgsConstructor
 @Configuration
-public class TransactionProcessorJobConfiguration {
+public class TransactionWriterJobConfiguration {
 
-    public static final String JOB_NAME = "transactionProcessorBatch";
+    public static final String JOB_NAME = "transactionWriterBatch";
     public static final String BEAN_PREFIX = JOB_NAME + "_";
 
     private final JobBuilderFactory jobBuilderFactory;
@@ -46,9 +44,8 @@ public class TransactionProcessorJobConfiguration {
     @JobScope
     public Step step() {
         return stepBuilderFactory.get(BEAN_PREFIX + "step")
-                .<Teacher, ClassInformation>chunk(chunkSize)
+                .<Teacher, Teacher>chunk(chunkSize)
                 .reader(reader())
-                .processor(processor())
                 .writer(writer())
                 .build();
     }
@@ -64,15 +61,11 @@ public class TransactionProcessorJobConfiguration {
                 .build();
     }
 
-    public ItemProcessor<Teacher, ClassInformation> processor() {
-        return teacher -> new ClassInformation(teacher.getName(), teacher.getStudents().size());
-    }
-
-    private ItemWriter<ClassInformation> writer() {
+    private ItemWriter<Teacher> writer() {
         return items -> {
             log.info(">>>>>>>>>>> Item Write");
-            for (ClassInformation item : items) {
-                log.info("반 정보= {}", item);
+            for (Teacher item : items) {
+                log.info("teacher={}, student Size={}", item.getName(), item.getStudents().size());
             }
         };
     }
